@@ -8,6 +8,8 @@ INITIAL_MARKER = ' '
 PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
 
+MAX_SCORE = 5
+
 def prompt(msg)
   puts "=> #{msg}"
 end
@@ -23,11 +25,12 @@ def joinor(arr, conn=', ', word='or')
     end
 end
 
-
 # rubocop: disable Metrics/AbcSize
-def display_board(brd)
+def display_board(brd, score)
   system 'clear'
   puts "You're a #{PLAYER_MARKER}.  Computer is #{COMPUTER_MARKER}"
+  puts "Player score: #{score['Player']}"
+  puts "Computer score: #{score['Computer']}"
   puts "     |     |"
   puts "  #{brd[1]}  |  #{brd[2]}  |  #{brd[3]}"
   puts "     |     |"
@@ -89,29 +92,44 @@ def detect_winner(brd)
 end
 
 loop do
-  board = initialize_board
+  # start a new round
+  score = {"Computer" => 0, "Player" => 0}
 
-  loop do
-    display_board(board)
+  while score.values.max < MAX_SCORE
+    # new game in same round
+    board = initialize_board
 
-    player_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
+    loop do
+      # start turns
+      display_board(board, score)
 
-    computer_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
+      player_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
+
+      computer_places_piece!(board)
+      break if someone_won?(board) || board_full?(board)
+    end
+
+    # show last game board
+    score[detect_winner(board)] += 1 if someone_won?(board)
+    display_board(board, score)
+
+    # show the results
+    if someone_won?(board)
+      if score.values.max == MAX_SCORE
+        prompt "#{detect_winner(board)} won the round!"
+      else
+        prompt "#{detect_winner(board)} won!"
+      end
+    else
+      prompt "It's a tie!"
+    end
+
+    # now what?
+    prompt "Five games to win a round.  Play again? (y or n)"
+    answer = gets.chomp
+    break unless answer.downcase.start_with?('y')
   end
-
-  display_board(board)
-
-  if someone_won?(board)
-    prompt "#{detect_winner(board)} won!"
-  else
-    prompt "It's a tie!"
-  end
-
-  prompt "Play again? (y or n)"
-  answer = gets.chomp
-  break unless answer.downcase.start_with?('y')
 end
 
 prompt "Thanks for playing Tic Tac Toe!  Goodbye!"
