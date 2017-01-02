@@ -91,6 +91,18 @@ def detect_winner(brd)
   nil
 end
 
+def show_result(board, score)
+  if someone_won?(board)
+    if score.values.max == MAX_SCORE
+      prompt "#{detect_winner(board)} won the round!"
+    else
+      prompt "#{detect_winner(board)} won!"
+    end
+  else
+    prompt "It's a tie!"
+  end
+end
+
 loop do
   # start a new round
   score = {"Computer" => 0, "Player" => 0}
@@ -114,17 +126,7 @@ loop do
     score[detect_winner(board)] += 1 if someone_won?(board)
     display_board(board, score)
 
-    # show the results
-    if someone_won?(board)
-      if score.values.max == MAX_SCORE
-        prompt "#{detect_winner(board)} won the round!"
-      else
-        prompt "#{detect_winner(board)} won!"
-      end
-    else
-      prompt "It's a tie!"
-    end
-
+    show_result(board, score)
     # now what?
     prompt "Five games to win a round.  Play again? (y or n)"
     answer = gets.chomp
