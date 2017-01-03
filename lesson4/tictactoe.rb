@@ -12,6 +12,12 @@ MAX_SCORE = 5
 
 INITIAL_MOVERS = ['Player', 'Computer', 'choose']
 
+END_GAME_PROMPT = 'Five games to win a round.  Keep playing?'\
+                  ' (y to continue the round)'
+
+END_ROUND_PROMPT = 'Would you like to start a new round?' \
+                   ' (y to start a new round)'
+
 def prompt(msg)
   puts "=> #{msg}"
 end
@@ -192,11 +198,18 @@ loop do
     display_board(board, score)
 
     show_result(board, score)
+
     # now what?
-    prompt "Five games to win a round.  Play again? (y or n)"
-    answer = gets.chomp
-    break unless answer.downcase.start_with?('y')
+    if score.values.max < MAX_SCORE
+      prompt END_GAME_PROMPT
+      answer = gets.chomp
+      break unless answer.downcase.start_with?('y')
+    end
   end
+
+  prompt END_ROUND_PROMPT
+  answer = gets.chomp
+  break unless answer.downcase.start_with?('y')
 end
 
 prompt "Thanks for playing Tic Tac Toe!  Goodbye!"
