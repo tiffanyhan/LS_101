@@ -160,11 +160,18 @@ def show_result(board, score)
   end
 end
 
-def update_score!(board, score)
+def update_score(board, score)
   if someone_won?(board)
     score[detect_winner(board)] += 1
   end
   score
+end
+
+def who_go_first(answer)
+  case answer
+  when 'p' then 'Player'
+  when 'c' then 'Computer'
+  end
 end
 
 prompt "Welcome to TicTacToe!"
@@ -181,10 +188,7 @@ loop do
     # ask user to choose initial mover
     if initial_mover == 'choose'
       answer = validate_user_input(GO_FIRST_PROMPT, ['p', 'c'])
-      case answer
-      when 'p' then initial_mover = 'Player'
-      when 'c' then initial_mover = 'Computer'
-      end
+      initial_mover = who_go_first(answer)
     end
 
     current_player = initial_mover
@@ -197,7 +201,7 @@ loop do
     end
 
     # show last game board
-    score = update_score!(board, score)
+    score = update_score(board, score)
     display_board(board, score)
 
     # show game results
