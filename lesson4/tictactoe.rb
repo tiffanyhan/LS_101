@@ -92,6 +92,11 @@ def computer_places_piece!(brd)
     end
   end
 
+  # pick square 5 if available
+  if !square
+    square = 5 if empty_squares(brd).include?(5)
+  end
+
   # just pick any square
   if !square
     square = empty_squares(brd).sample
