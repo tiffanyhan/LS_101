@@ -160,6 +160,13 @@ def show_result(board, score)
   end
 end
 
+def update_score!(board, score)
+  if someone_won?(board)
+    score[detect_winner(board)] += 1
+  end
+  score
+end
+
 prompt "Welcome to TicTacToe!"
 
 loop do
@@ -190,7 +197,7 @@ loop do
     end
 
     # show last game board
-    score[detect_winner(board)] += 1 if someone_won?(board)
+    score = update_score!(board, score)
     display_board(board, score)
 
     # show game results
