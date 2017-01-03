@@ -10,6 +10,8 @@ COMPUTER_MARKER = 'O'
 
 MAX_SCORE = 5
 
+INITIAL_MOVERS = ['Player', 'Computer', 'choose']
+
 def prompt(msg)
   puts "=> #{msg}"
 end
@@ -136,6 +138,8 @@ def show_result(board, score)
   end
 end
 
+prompt "Welcome to TicTacToe!"
+
 loop do
   # start a new round
   score = {"Computer" => 0, "Player" => 0}
@@ -143,16 +147,44 @@ loop do
   while score.values.max < MAX_SCORE
     # new game in same round
     board = initialize_board
+    initial_mover = INITIAL_MOVERS.sample
+
+    if initial_mover == 'choose'
+      loop do
+        prompt "Who gets to go first?  Press p for player, c for computer."
+        answer = gets.chomp.downcase
+
+        h = {'p' => 'Player', 'c' => 'Computer'}
+
+        if h.keys.include?(answer)
+          initial_mover = h[answer]
+          break
+        else
+          prompt "Sorry, that's not a valid choice"
+        end
+      end
+    end
 
     loop do
       # start turns
-      display_board(board, score)
+      case initial_mover
+      when 'Computer'
+        computer_places_piece!(board)
+        break if someone_won?(board) || board_full?(board)
 
-      player_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
+        display_board(board, score)
 
-      computer_places_piece!(board)
-      break if someone_won?(board) || board_full?(board)
+        player_places_piece!(board)
+        break if someone_won?(board) || board_full?(board)
+      when 'Player'
+        display_board(board, score)
+
+        player_places_piece!(board)
+        break if someone_won?(board) || board_full?(board)
+
+        computer_places_piece!(board)
+        break if someone_won?(board) || board_full?(board)
+      end
     end
 
     # show last game board
