@@ -159,12 +159,12 @@ def show_result(board, score)
   end
 end
 
-def keep_going?(question)
+def validate_user_input(question, answer_arr)
   answer = ''
   loop do
     prompt question
     answer = gets.chomp.downcase
-    break if ['y', 'n'].include?(answer)
+    break if answer_arr.include?(answer)
     prompt INVALID_ANS_PROMPT
   end
   answer
@@ -183,14 +183,10 @@ loop do
 
     # ask user to choose initial mover
     if initial_mover == 'choose'
-      loop do
-        prompt GO_FIRST_PROMPT
-        answer = gets.chomp.downcase
-
-        valid_answers = { 'p' => 'Player', 'c' => 'Computer' }
-        initial_mover = valid_answers[answer]
-        break if initial_mover
-        prompt INVALID_ANS_PROMPT
+      answer = validate_user_input(GO_FIRST_PROMPT, ['p', 'c'])
+      case answer
+      when 'p' then initial_mover = 'Player'
+      when 'c' then initial_mover = 'Computer'
       end
     end
 
@@ -212,12 +208,12 @@ loop do
 
     # now what?
     if score.values.max < MAX_SCORE
-      answer = keep_going?(END_GAME_PROMPT)
+      answer = validate_user_input(END_GAME_PROMPT, ['y', 'n'])
       break if answer.start_with?('n')
     end
   end
 
-  answer = keep_going?(END_ROUND_PROMPT)
+  answer = validate_user_input(END_ROUND_PROMPT, ['y', 'n'])
   break if answer.start_with?('n')
 end
 
