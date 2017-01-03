@@ -67,8 +67,27 @@ def player_places_piece!(brd)
   brd[square] = PLAYER_MARKER
 end
 
+def find_at_risk_square(brd, line)
+  if brd.values_at(*line).count(PLAYER_MARKER) == 2 &&
+     empty_squares(brd).include?(line.last)
+    line.last
+  else
+    nil
+  end
+end
+
 def computer_places_piece!(brd)
-  square = empty_squares(brd).sample
+  square = nil
+
+  WINNING_LINES.each do |line|
+    square = find_at_risk_square(brd, line)
+    break if square
+  end
+
+  if !square
+    square = empty_squares(brd).sample
+  end
+
   brd[square] = COMPUTER_MARKER
 end
 
