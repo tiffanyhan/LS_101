@@ -88,7 +88,6 @@ def find_winning_square(brd, line, marker)
   if brd.values_at(*line).count(marker) == 2
     brd.select { |k, v| line.include?(k) && v == INITIAL_MARKER }.keys.first
   end
-  nil
 end
 
 def computer_places_piece!(brd)
@@ -160,6 +159,17 @@ def show_result(board, score)
   end
 end
 
+def keep_going?(question)
+  answer = ''
+  loop do
+    prompt question
+    answer = gets.chomp.downcase
+    break if ['y', 'n'].include?(answer)
+    prompt INVALID_ANS_PROMPT
+  end
+  answer
+end
+
 prompt "Welcome to TicTacToe!"
 
 loop do
@@ -202,26 +212,12 @@ loop do
 
     # now what?
     if score.values.max < MAX_SCORE
-      answer = ''
-      loop do
-        prompt END_GAME_PROMPT
-        answer = gets.chomp.downcase
-        break if ['y', 'n'].include?(answer)
-        prompt INVALID_ANS_PROMPT
-      end
-
+      answer = keep_going?(END_GAME_PROMPT)
       break if answer.start_with?('n')
     end
   end
 
-  answer = ''
-  loop do
-    prompt END_ROUND_PROMPT
-    answer = gets.chomp.downcase
-    break if ['y', 'n'].include?(answer)
-    prompt INVALID_ANS_PROMPT
-  end
-
+  answer = keep_going?(END_ROUND_PROMPT)
   break if answer.start_with?('n')
 end
 
