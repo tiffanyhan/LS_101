@@ -68,9 +68,16 @@ def player_places_piece!(brd)
 end
 
 def find_at_risk_square(brd, line)
-  if brd.values_at(*line).count(PLAYER_MARKER) == 2 &&
-     empty_squares(brd).include?(line.last)
-    line.last
+  if brd.values_at(*line).count(PLAYER_MARKER) == 2
+    brd.select{|k,v| line.include?(k) && v == ' '}.keys.first
+  else
+    nil
+  end
+end
+
+def find_winning_square(brd, line)
+  if brd.values_at(*line).count(COMPUTER_MARKER) == 2
+    brd.select{|k,v| line.include?(k) && v == ' '}.keys.first
   else
     nil
   end
@@ -80,8 +87,15 @@ def computer_places_piece!(brd)
   square = nil
 
   WINNING_LINES.each do |line|
-    square = find_at_risk_square(brd, line)
-    break if square
+      square = find_winning_square(brd, line)
+      break if square
+    end
+
+  if !square
+    WINNING_LINES.each do |line|
+      square = find_at_risk_square(brd, line)
+      break if square
+    end
   end
 
   if !square
