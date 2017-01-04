@@ -7,8 +7,13 @@ SUITS = ['H', 'S', 'C', 'D'].freeze
 TARGET = 21
 DEALER_NO = 17
 
+GAMES_IN_A_ROUND = 5
+
 HIT_OR_STAY_PROMPT = "Would you like to (h)it or (s)tay?".freeze
-PLAY_AGAIN_PROMPT = "Would you like to play again? (y or n)".freeze
+PLAY_AGAIN_PROMPT = "Five games to win a round. Would you like to play again?"\
+                    " (y to continue the round, n to leave the round)".freeze
+END_ROUND_PROMPT = "Would you like to start a new round? (y or n)".freeze
+
 INVALID_ANSWER_PROMPT = "Sorry, that's not a valid answer.".freeze
 
 PLAYERS = ['Player', 'Dealer'].freeze
@@ -48,7 +53,6 @@ def display_initial_deal(player_cards, dealer_cards)
 end
 
 def total(cards)
-  binding.pry
   sum = 0
   # cards: [["H", "10"], ["D", "3"]]
   cards.each do |card|
@@ -130,16 +134,29 @@ def detect_result(player_total, dealer_total)
 end
 
 def display_result(player_cards, dealer_cards,
-                   player_total, dealer_total)
+                   player_total, dealer_total, score)
   display_final_cards(player_cards, dealer_cards,
                       player_total, dealer_total)
 
   result = detect_result(player_total, dealer_total)
   case result
-  when :player then prompt "You win!"
-  when :dealer then prompt "Dealer wins!"
-  when :tie then prompt "It's a tie!"
+  when :player
+    increment_score!('Player', score)
+    prompt "You win!"
+  when :dealer
+    increment_score!('Dealer', score)
+    prompt "Dealer wins!"
+  when :tie
+    prompt "It's a tie!"
   end
+end
+
+def increment_score!(winner, score)
+  score[winner] += 1
+end
+
+def display_score(score)
+  prompt "Your score: #{score['Player']}, Dealer score: #{score['Dealer']}"
 end
 
 def play_again?(answer)
@@ -147,39 +164,56 @@ def play_again?(answer)
 end
 
 loop do
-  deck = initialize_deck
-  player_cards = []
-  dealer_cards = []
+  score = { 'Player' => 0, 'Dealer' => 0 }
 
-  deal_cards!(deck, player_cards, dealer_cards)
-  player_initial_total = display_initial_deal(player_cards, dealer_cards)
+  while score.values.max < GAMES_IN_A_ROUND
 
-  player_total = player_does_turn(deck, player_cards, player_initial_total)
+    deck = initialize_deck
+    player_cards = []
+    dealer_cards = []
 
-  if busted?(player_total)
-    dealer_total = total(dealer_cards)
-    display_busted_result('Player', player_total, dealer_total,
-                          player_cards, dealer_cards)
+    deal_cards!(deck, player_cards, dealer_cards)
+    player_initial_total = display_initial_deal(player_cards, dealer_cards)
+
+    player_total = player_does_turn(deck, player_cards, player_initial_total)
+
+    if busted?(player_total)
+      increment_score!('Dealer', score)
+      dealer_total = total(dealer_cards)
+      display_busted_result('Player', player_total, dealer_total,
+                            player_cards, dealer_cards)
+      display_score(score)
+
+      answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
+      play_again?(answer) ? next : break
+    end
+
+    prompt "You stayed."
+    prompt "Dealer turn..."
+
+    dealer_total = dealer_does_turn(deck, dealer_cards)
+
+    if busted?(dealer_total)
+      increment_score!('Player', score)
+      display_busted_result('Dealer', player_total, dealer_total,
+                            player_cards, dealer_cards)
+      display_score(score)
+
+      answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
+      play_again?(answer) ? next : break
+    end
+
+    prompt "Dealer stayed."
+    display_result(player_cards, dealer_cards,
+                   player_total, dealer_total, score)
+    display_score(score)
+
     answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
-    play_again?(answer) ? next : break
+    break unless play_again?(answer)
   end
 
-  prompt "You stayed."
-  prompt "Dealer turn..."
-
-  dealer_total = dealer_does_turn(deck, dealer_cards)
-
-  if busted?(dealer_total)
-    display_busted_result('Dealer', player_total, dealer_total,
-                          player_cards, dealer_cards)
-
-    answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
-    play_again?(answer) ? next : break
-  end
-
-  prompt "Dealer stayed."
-  display_result(player_cards, dealer_cards, player_total, dealer_total)
-
-  answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
+  answer = validate_answer(END_ROUND_PROMPT, ['y', 'n'])
   break unless play_again?(answer)
 end
+
+prompt "Thank you for playing TwentyOne!"
