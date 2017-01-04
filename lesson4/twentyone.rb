@@ -1,18 +1,31 @@
 require 'pry'
 
 VALUES = ['2', '3', '4', '5', '6', '7', '8', '9',
-          '10', 'J', 'Q', 'K', 'A']
-SUITS = ['H', 'S', 'C', 'D']
+          '10', 'J', 'Q', 'K', 'A'].freeze
+SUITS = ['H', 'S', 'C', 'D'].freeze
 
 TARGET = 21
 DEALER_NO = 17
 
-HIT_OR_STAY_PROMPT = "Would you like to (h)it or (s)tay?"
-PLAY_AGAIN_PROMPT = "Would you like to play again? (y or n)"
-INVALID_ANSWER_PROMPT = "Sorry, that's not a valid answer."
+HIT_OR_STAY_PROMPT = "Would you like to (h)it or (s)tay?".freeze
+PLAY_AGAIN_PROMPT = "Would you like to play again? (y or n)".freeze
+INVALID_ANSWER_PROMPT = "Sorry, that's not a valid answer.".freeze
+
+PLAYERS = ['Player', 'Dealer'].freeze
 
 def prompt(msg)
   puts "=> #{msg}"
+end
+
+def validate_answer(question, valid_answers)
+  answer = ''
+  loop do
+    prompt question
+    answer = gets.chomp.downcase
+    break if valid_answers.include?(answer)
+    prompt INVALID_ANSWER_PROMPT
+  end
+  answer
 end
 
 def initialize_deck
@@ -26,10 +39,6 @@ def deal_cards!(deck, player_cards, dealer_cards)
   end
 end
 
-def display_hand(cards)
-  prompt "You have: #{cards} for a total of #{total(cards)}"
-end
-
 def display_initial_deal(player_cards, dealer_cards)
   prompt "You have: #{player_cards[0]} and #{player_cards[1]}"\
        " for a total of #{total(player_cards)}"
@@ -40,13 +49,13 @@ def total(cards)
   sum = 0
   # cards: [["H", "10"], ["D", "3"]]
   cards.each do |card|
-    if card.last == 'A'
-      sum += 11
-    elsif card.last.to_i == 0
-      sum += 10
-    else
-      sum += card.last.to_i
-    end
+    sum += if card.last == 'A'
+             11
+           elsif card.last.to_i.zero?
+             10
+           else
+             card.last.to_i
+           end
   end
 
   # correct for aces
@@ -64,9 +73,38 @@ def busted?(cards)
   total(cards) > 21
 end
 
+def player_does_turn(deck, player_cards)
+  loop do
+    answer = validate_answer(HIT_OR_STAY_PROMPT, ['h', 's'])
+    if answer == 'h'
+      hit!(deck, player_cards)
+      prompt "You hit!"
+      prompt "You have: #{cards} for a total of #{total(cards)}"
+    end
+
+    break if busted?(player_cards) || answer == 's'
+  end
+end
+
+def dealer_does_turn(deck, dealer_cards)
+  loop do
+    break if total(dealer_cards) >= 17
+    hit!(deck, dealer_cards)
+    prompt "Dealer hit!"
+    prompt "Dealer has: #{dealer_cards} for a total of #{total(dealer_cards)}"
+  end
+end
+
 def display_final_cards(player_cards, dealer_cards)
   prompt "You have: #{player_cards} for a total of #{total(player_cards)}"
   prompt "Dealer has: #{dealer_cards} for a total of #{total(dealer_cards)}"
+end
+
+def display_busted_result(loser, player_cards, dealer_cards)
+  winner = PLAYERS.select { |player| player != loser }.first
+  prompt "#{loser == 'Player' ? 'You' : 'Dealer'} busted!"
+  display_final_cards(player_cards, dealer_cards)
+  prompt "#{winner == 'Player' ? 'You' : 'Dealer'} won!"
 end
 
 def detect_result(player_cards, dealer_cards)
@@ -92,17 +130,6 @@ def display_result(player_cards, dealer_cards)
   end
 end
 
-def validate_answer(question, valid_answers)
-  answer = ''
-  loop do
-    prompt question
-    answer = gets.chomp.downcase
-    break if valid_answers.include?(answer)
-    prompt INVALID_ANSWER_PROMPT
-  end
-  answer
-end
-
 def play_again?(answer)
   answer == 'y'
 end
@@ -115,50 +142,28 @@ loop do
   deal_cards!(deck, player_cards, dealer_cards)
   display_initial_deal(player_cards, dealer_cards)
 
-  # player turn
-  loop do
-    answer = validate_answer(HIT_OR_STAY_PROMPT, ['h', 's'])
-    if answer == 'h'
-      hit!(deck, player_cards)
-      prompt "You hit!"
-      display_hand(player_cards)
-    end
-
-    break if busted?(player_cards) || answer == 's'
-  end
+  player_does_turn(deck, player_cards)
 
   if busted?(player_cards)
-    prompt "You busted!"
-    display_final_cards(player_cards, dealer_cards)
-    prompt "Dealer wins!"
+    display_busted_result('Player', player_cards, dealer_cards)
 
     answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
     play_again?(answer) ? next : break
-  else
-    prompt "You stayed."
   end
 
+  prompt "You stayed."
   prompt "Dealer turn..."
 
-  # dealer turn
-  loop do
-    break if total(dealer_cards) >= 17
-    hit!(deck, dealer_cards)
-    prompt "Dealer hit!"
-    prompt "Dealer has: #{dealer_cards} for a total of #{total(dealer_cards)}"
-  end
+  dealer_does_turn(deck, dealer_cards)
 
   if busted?(dealer_cards)
-    prompt "Dealer busted!"
-    display_final_cards(player_cards, dealer_cards)
-    prompt "You win!"
+    display_busted_result('Dealer', player_cards, dealer_cards)
 
     answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
     play_again?(answer) ? next : break
-  else
-    prompt "Dealer stayed."
   end
 
+  prompt "Dealer stayed."
   display_result(player_cards, dealer_cards)
 
   answer = validate_answer(PLAY_AGAIN_PROMPT, ['y', 'n'])
